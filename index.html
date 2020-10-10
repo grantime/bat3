@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Show drawn polygon area</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css" rel="stylesheet" />
+<style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<style>
+    .calculation-box {
+        height: 75px;
+        width: 150px;
+        position: absolute;
+        bottom: 40px;
+        left: 10px;
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        text-align: center;
+    }
+
+    p {
+        font-family: 'Open Sans';
+        margin: 0;
+        font-size: 13px;
+    }
+</style>
+
+<script src="https://api.tiles.mapbox.com/mapbox.js/plugins/turf/v3.0.11/turf.min.js"></script>
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.0/mapbox-gl-draw.js"></script>
+<script type="text/javascript" src="mapbox-gl-draw-rotate-mode.min.js"></script>
+<link
+    rel="stylesheet"
+    href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.0/mapbox-gl-draw.css"
+    type="text/css"
+/>
+<div id="map"></div>
+<div class="calculation-box">
+    <p>Draw a polygon using the draw tools.</p>
+    <div id="calculated-area"></div>
+</div>
+
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoiZGFya2tyYXlhdCIsImEiOiJjaW96cW42bmswMDE3ODBsdzBwaGRoZndhIn0.UbYOIu1DjsJt-FA-mM0Pvg';
+    var map = new mapboxgl.Map({
+        container: 'map', // container id
+        style: 'mapbox://styles/mapbox/satellite-v9', //hosted style id
+        center: [2.52, 48.60], // starting position
+        zoom: 15 // starting zoom
+    });
+    
+    // Elevation definition 
+    var height = 120;
+
+    //heigth of the floors
+    var hfloors = 3;
+
+    //number of floors
+    var floorscalc = height/hfloors;
+
+    var bfloors = 0;
+
+
+
+    var draw = new MapboxDraw({
+        displayControlsDefault: false,
+        controls: {
+            polygon: true,
+            trash: true
+        }, 
+        styles: [
+    // ACTIVE (being drawn)
+    // line stroke
+    {
+        "id": "gl-draw-line",
+        "type": "line",
+        "filter": ["all", ["==", "$type", "LineString"], ["!=", "mode", "static"]],
+        "layout": {
+          "line-cap": "round",
+          "line-join": "round"
+        },
+        "paint": {
+          "line-color": "#D20C0C",
+          "line-dasharray": [0.2, 2],
+          "line-width": 2
+        }
+    },
+    // polygon fill
+    {
+      "id": "gl-draw-polygon-fill",
+      "type": "fill-extrusion",
+      "filter": ["all", ["==", "$type", "Polygon"], ["!=", "mode", "static"]],
+      "paint": {
+        "fill-extrusion-color": "#D20C0C",
+        "fill-extrusion-opacity": 1,
+        "fill-extrusion-height":  hfloors,
+        "fill-extrusion-base": bfloors,
+      }
+    },
+    // polygon outline stroke
+    // This doesn't style the first edge of the polygon, which uses the line stroke styling instead
+    {
+      "id": "gl-draw-polygon-stroke-active",
+      "type": "line",
+      "filter": ["all", ["==", "$type", "Polygon"], ["!=", "mode", "static"]],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#D20C0C",
+        "line-dasharray": [0.2, 2],
+        "line-width": 2
+      }
+    },
+    // vertex point halos
+    {
+      "id": "gl-draw-polygon-and-line-vertex-halo-active",
+      "type": "circle",
+      "filter": ["all", ["==", "meta", "vertex"], ["==", "$type", "Point"], ["!=", "mode", "static"]],
+      "paint": {
+        "circle-radius": 5,
+        "circle-color": "#FFF"
+      }
+    },
+    // vertex points
+    {
+      "id": "gl-draw-polygon-and-line-vertex-active",
+      "type": "circle",
+      "filter": ["all", ["==", "meta", "vertex"], ["==", "$type", "Point"], ["!=", "mode", "static"]],
+      "paint": {
+        "circle-radius": 3,
+        "circle-color": "#D20C0C",
+      }
+    },
+
+    // INACTIVE (static, already drawn)
+    // line stroke
+    {
+        "id": "gl-draw-line-static",
+        "type": "line",
+        "filter": ["all", ["==", "$type", "LineString"], ["==", "mode", "static"]],
+        "layout": {
+          "line-cap": "round",
+          "line-join": "round"
+        },
+        "paint": {
+          "line-color": "#000",
+          "line-width": 3
+        }
+    },
+    // polygon fill
+    {
+      "id": "gl-draw-polygon-fill-static",
+      "type": "fill-extrusion",
+      "filter": ["all", ["==", "$type", "Polygon"], ["==", "mode", "static"]],
+      "paint": {
+        "fill-extrusion-color": "#000",
+        "fill-extrusion-opacity": 1,
+        "fill-extrusion-height": 3,
+        
+      }
+    },
+    // polygon outline
+    {
+      "id": "gl-draw-polygon-stroke-static",
+      "type": "line",
+      "filter": ["all", ["==", "$type", "Polygon"], ["==", "mode", "static"]],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#000",
+        "line-width": 3
+      }
+    }
+  ]
+        
+    });
+    map.addControl(draw);
+
+    map.on('draw.create', updateArea);
+    map.on('draw.delete', updateArea);
+    map.on('draw.update', updateArea);
+
+    map.on('draw.create', Stairs);
+    map.on('draw.delete', Stairs);
+    map.on('draw.update', Stairs);
+
+    
+     
+
+
+    function updateArea(e) {
+        var data = draw.getAll();
+        console.log(data);
+        var answer = document.getElementById('calculated-area');
+        if (data.features.length > 0) {
+            var area = turf.area(data);
+            // restrict to area to 2 decimal points
+            var rounded_area = Math.round(area * 100) / 100;
+            answer.innerHTML =
+                '<p><strong>' +
+                rounded_area +
+                '</strong></p><p>square meters</p>';
+        } else {
+            answer.innerHTML = '';
+            if (e.type !== 'draw.delete')
+                alert('Use the draw tools to draw a polygon!');
+        }
+    }
+
+  function Stairs(e){
+
+    
+
+    let i = 1;
+    do {
+      i +=1;
+      
+      var bfloors = hfloors *i;
+      console.log(bfloors);
+      var data1 = draw.getAll();
+      const charge = data1.features[0];
+      data1.features[1] = data1.features[0];
+      console.log(data1);
+    } while (i<floorscalc);
+    
+    
+    draw.add(data1);
+  }
+    
+</script>
+
+</body>
+</html>
