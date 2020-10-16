@@ -216,24 +216,28 @@
         }
     }
 
-  function Stairs(e){
+function Stairs(e){
 
-    
+    var data1 = draw.getAll();
 
     let i = 1;
+    data1.features[i] = data1.features[0];
     do {
       i +=1;
       
       var bfloors = hfloors *i;
       console.log(bfloors);
-      var data1 = draw.getAll();
-      const charge = data1.features[0];
-      data1.features[1] = data1.features[0];
+      
+      
+      
+      
+      data1.features[i].properties.hauteurs = bfloors;
+      data1.features[i].id=i;
       console.log(data1);
     } while (i<floorscalc);
+
+      draw.add(data1);
     
-    
-    draw.add(data1);
   }
     
 </script>
