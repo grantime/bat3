@@ -58,17 +58,17 @@
     var height = 120;
 
     //heigth of the floors
-    var hfloors = 3;
+    var hfloors = 50;
 
     //number of floors
     var floorscalc = height/hfloors;
 
-    var bfloors = 0;
-
+    var bfloors = 3;
 
 
     var draw = new MapboxDraw({
         displayControlsDefault: false,
+        userProperties : true,
         controls: {
             polygon: true,
             trash: true
@@ -96,10 +96,12 @@
       "type": "fill-extrusion",
       "filter": ["all", ["==", "$type", "Polygon"], ["!=", "mode", "static"]],
       "paint": {
-        "fill-extrusion-color": "#D20C0C",
+        "fill-extrusion-color": "#FFF",
         "fill-extrusion-opacity": 1,
-        "fill-extrusion-height":  hfloors,
-        "fill-extrusion-base": bfloors,
+        "fill-extrusion-height": 
+["get", "user_hfloors"],
+        "fill-extrusion-base":
+  bfloors,
       }
     },
     // polygon outline stroke
@@ -151,7 +153,8 @@
         },
         "paint": {
           "line-color": "#000",
-          "line-width": 3
+          "line-width": 3,
+          
         }
     },
     // polygon fill
@@ -162,8 +165,6 @@
       "paint": {
         "fill-extrusion-color": "#000",
         "fill-extrusion-opacity": 1,
-        "fill-extrusion-height": 3,
-        
       }
     },
     // polygon outline
@@ -193,12 +194,12 @@
     map.on('draw.delete', Stairs);
     map.on('draw.update', Stairs);
 
+
     
-     
 
 
     function updateArea(e) {
-        var data = draw.getAll();
+      var data = draw.getAll();   
         console.log(data);
         var answer = document.getElementById('calculated-area');
         if (data.features.length > 0) {
@@ -219,24 +220,23 @@
 function Stairs(e){
 
     var data1 = draw.getAll();
+    draw.deleteAll();
+    data1.features[0].properties.hfloors = 200;
+    //data1.features[0].properties.bfloors = 0;
+    //console.log("data1 première partie" ,draw.getAll());
 
-    let i = 1;
-    data1.features[i] = data1.features[0];
-    do {
-      i +=1;
-      
-      var bfloors = hfloors *i;
-      console.log(bfloors);
-      
-      
-      
-      
-      data1.features[i].properties.hauteurs = bfloors;
-      data1.features[i].id=i;
-      console.log(data1);
-    } while (i<floorscalc);
-
-      draw.add(data1);
+    
+    
+    datafeatures = data1.features[0];
+    datafeatures.id = 1;
+    console.log(datafeatures)
+    data1.features[1] = datafeatures;
+    data1.features[1].properties.bfloors = 3;
+    console.log("data1",data1);
+    
+    
+    draw.add(data1);
+    console.log("chargé?",draw.getAll());
     
   }
     
