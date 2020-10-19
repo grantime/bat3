@@ -58,12 +58,12 @@
     var height = 120;
 
     //heigth of the floors
-    var hfloors = 50;
+    var hfloors = 3;
 
     //number of floors
     var floorscalc = height/hfloors;
 
-    var bfloors = 3;
+    var bfloors = 0;
 
 
     var draw = new MapboxDraw({
@@ -221,19 +221,49 @@ function Stairs(e){
 
     var data1 = draw.getAll();
     draw.deleteAll();
-    data1.features[0].properties.hfloors = 200;
-    //data1.features[0].properties.bfloors = 0;
-    //console.log("data1 première partie" ,draw.getAll());
+    var datafeaturest = {
+  id: 'unique-id',
+  type: 'Feature',
+  properties: {},
+  geometry: { type: 'Polygon', coordinates: [0, 0] [1,1] [2,2] }
+};
 
-    
-    
-    datafeatures = data1.features[0];
-    datafeatures.id = 1;
-    console.log(datafeatures)
-    data1.features[1] = datafeatures;
-    data1.features[1].properties.bfloors = 3;
+
+    data1.features[0].properties.hfloors = hfloors;
+    data1.features[0].properties.bfloors = 0;
+    console.log("data1 première partie" ,draw.getAll());
+    //datafeatures = data1.features[0];
+    //console.log(datafeatures);
+    data1.features[1] = datafeaturest;
+    data1.features[1].geometry.coordinates = data1.features[0].geometry.coordinates;
+    data1.features[1].properties.bfloors = bfloors+3;
+    data1.features[1].properties.hfloors = hfloors*2;
+    data1.features[1].id = 0;
     console.log("data1",data1);
     
+    
+    let i = 1;
+    data1.features[i] = datafeaturest;
+    var hauteur = hfloors;
+    while (hfloors*i < height) {
+     i += 1;
+     data1.features[i] = datafeaturest;
+     console.log(i);
+     
+     data1.features[i].id=Math.random();
+     data1.features[i].geometry.coordinates = data1.features[0].geometry.coordinates;
+     data1.features[i].properties.bfloors = (bfloors+1)*i;
+     data1.features[i].properties.hfloors = hfloors*i;
+      
+      //var hauteur = hfloors*i;
+     // data1.features[i].properties.bfloors = hauteur;
+      console.log(datafeaturest)
+     
+      //console.log(hauteur);
+     // console.log(data1);
+      
+   } ;
+
     
     draw.add(data1);
     console.log("chargé?",draw.getAll());
